@@ -115,7 +115,7 @@ export const joinRoom = async (roomCode: string, nickname: string) => {
     .eq('room_id', room.id)
     .eq('nickname', nickname)
     .eq('is_active', true)
-    .single();
+    .maybeSingle();
 
   if (existingPlayer) {
     throw new Error('Nickname already taken in this room');
