@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'YOUR_SUPABASE_URL';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-anon-key';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -324,12 +324,19 @@ export const startGame = async (roomId: string) => {
 };
 
 export const nextQuestion = async (roomId: string, questionNumber: number) => {
-  const { error } = await supabase
+  console.log('Updating room to question:', questionNumber);
+  
+  const { data, error } = await supabase
     .from('game_rooms')
     .update({ current_question: questionNumber })
-    .eq('id', roomId);
+    .eq('id', roomId)
+    .select()
+    .single();
 
   if (error) throw error;
+  
+  console.log('Room updated successfully:', data);
+  return data;
 };
 
 export const endGame = async (roomId: string) => {

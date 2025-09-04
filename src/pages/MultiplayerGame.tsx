@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Users, MessageCircle, Send, Crown } from 'lucide-react';
+import { ArrowLeft, Users, MessageCircle, Send, Crown, X } from 'lucide-react';
 import { valorantQuestions } from '../data/questions';
 import { 
   supabase, 
@@ -21,6 +21,7 @@ import QuestionBox from '../components/QuestionBox';
 import AnswerButton from '../components/AnswerButton';
 import Timer from '../components/Timer';
 import ProgressBar from '../components/ProgressBar';
+import Confetti from '../components/Confetti';
 
 const MultiplayerGame: React.FC = () => {
   const navigate = useNavigate();
@@ -33,11 +34,13 @@ const MultiplayerGame: React.FC = () => {
   const [hasAnswered, setHasAnswered] = useState(false);
   const [questionAnswers, setQuestionAnswers] = useState<PlayerAnswer[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [showSuspense, setShowSuspense] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [showChat, setShowChat] = useState(false);
   const [waitingForPlayers, setWaitingForPlayers] = useState(false);
-  const [kickTimer, setKickTimer] = useState(0);
+  const [resetTimer, setResetTimer] = useState(false);
 
   const currentQuestion = valorantQuestions[room.current_question - 1];
   const totalQuestions = valorantQuestions.length;
@@ -50,60 +53,68 @@ const MultiplayerGame: React.FC = () => {
 
     loadPlayers();
     loadChatMessages();
+    loadQuestionAnswers();
     
     // Subscribe to room updates
-    const roomSubscription = supabase
-      .channel(`game-room-${room.id}`)
+    const roomChannel = supabase
+      .channel(`multiplayer-room-${room.id}`)
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
-        table: 'game_rooms'
+        table: 'game_rooms',
+        filter: `id=eq.${room.id}`
       }, (payload) => {
-        setRoom(payload.new as GameRoom);
-        if (payload.new.status === 'finished') {
+        console.log('Room updated:', payload.new);
+        const newRoom = payload.new as GameRoom;
+        setRoom(newRoom);
+        
+        if (newRoom.status === 'finished') {
           navigate('/multiplayer-results', { 
-            state: { room: payload.new, player, players }
+            state: { room: newRoom, player, players }
           });
         }
       })
       .subscribe();
 
     // Subscribe to player updates
-    const playersSubscription = supabase
-      .channel(`game-players-${room.id}`)
+    const playersChannel = supabase
+      .channel(`multiplayer-players-${room.id}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'players',
         filter: `room_id=eq.${room.id}`
       }, () => {
+        console.log('Players updated');
         loadPlayers();
       })
       .subscribe();
 
     // Subscribe to answers
-    const answersSubscription = supabase
-      .channel(`game-answers-${room.id}`)
+    const answersChannel = supabase
+      .channel(`multiplayer-answers-${room.id}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'player_answers',
         filter: `room_id=eq.${room.id}`
-      }, () => {
+      }, (payload) => {
+        console.log('New answer received:', payload.new);
         loadQuestionAnswers();
       })
       .subscribe();
 
     // Subscribe to chat
-    const chatSubscription = supabase
-      .channel(`game-chat-${room.id}`)
+    const chatChannel = supabase
+      .channel(`multiplayer-chat-${room.id}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'chat_messages',
         filter: `room_id=eq.${room.id}`
-      }, () => {
-        loadChatMessages();
+      }, (payload) => {
+        console.log('New chat message:', payload.new);
+        setChatMessages(prev => [...prev, payload.new as ChatMessage]);
       })
       .subscribe();
 
@@ -113,64 +124,72 @@ const MultiplayerGame: React.FC = () => {
     }, 5000);
 
     return () => {
-      roomSubscription.unsubscribe();
-      playersSubscription.unsubscribe();
-      answersSubscription.unsubscribe();
-      chatSubscription.unsubscribe();
+      roomChannel.unsubscribe();
+      playersChannel.unsubscribe();
+      answersChannel.unsubscribe();
+      chatChannel.unsubscribe();
       clearInterval(heartbeat);
     };
   }, [room.id, player.id, navigate]);
 
-  // Load question answers when question changes
+  // Reset state when question changes
   useEffect(() => {
+    console.log('Question changed to:', room.current_question);
+    setHasAnswered(false);
+    setSelectedAnswer(null);
+    setShowResults(false);
+    setShowSuspense(false);
+    setShowConfetti(false);
+    setWaitingForPlayers(false);
+    setResetTimer(true);
+    setTimeout(() => setResetTimer(false), 100);
+    
+    // Load answers for new question
     if (room.current_question > 0) {
       loadQuestionAnswers();
-      setHasAnswered(false);
-      setSelectedAnswer(null);
-      setShowResults(false);
-      setWaitingForPlayers(false);
-      setKickTimer(0);
     }
   }, [room.current_question]);
 
   // Check if all players have answered
   useEffect(() => {
-    console.log('Checking answer status:', { 
-      questionAnswersLength: questionAnswers.length, 
-      playersLength: players.length,
-      currentQuestion: room.current_question,
-      showResults 
-    });
-    
-    if (questionAnswers.length > 0 && players.length > 0) {
+    if (questionAnswers.length > 0 && players.length > 0 && !showResults) {
       const activePlayers = players.filter(p => p.is_active);
       const answeredPlayers = questionAnswers.filter(a => a.question_number === room.current_question);
       
-      console.log('Active players:', activePlayers.length);
-      console.log('Answered players:', answeredPlayers.length);
+      console.log('Checking answers:', {
+        activePlayers: activePlayers.length,
+        answeredPlayers: answeredPlayers.length,
+        currentQuestion: room.current_question
+      });
       
-      if (answeredPlayers.length === activePlayers.length && !showResults) {
+      if (answeredPlayers.length === activePlayers.length) {
         console.log('All players answered, showing results...');
         setShowResults(true);
         setWaitingForPlayers(false);
         
-        // Auto advance after showing results
-        setTimeout(() => {
-          if (player.is_host) {
-            console.log('Host advancing to next question...');
+        // Show confetti for correct answers
+        const myAnswer = answeredPlayers.find(a => a.player_id === player.id);
+        if (myAnswer && myAnswer.is_correct) {
+          setShowConfetti(true);
+          setTimeout(() => setShowConfetti(false), 3000);
+        }
+        
+        // Auto advance after showing results (only host)
+        if (player.is_host) {
+          setTimeout(() => {
             handleNextQuestion();
-          }
-        }, 5000);
+          }, 5000);
+        }
       } else if (hasAnswered && answeredPlayers.length < activePlayers.length) {
-        console.log('Waiting for other players...');
         setWaitingForPlayers(true);
       }
     }
-  }, [questionAnswers, players, room.current_question, hasAnswered, showResults, player.is_host]);
+  }, [questionAnswers, players, room.current_question, hasAnswered, showResults, player.is_host, player.id]);
 
   const loadPlayers = async () => {
     try {
       const roomPlayers = await getRoomPlayers(room.id);
+      console.log('Loaded players:', roomPlayers);
       setPlayers(roomPlayers);
     } catch (error) {
       console.error('Error loading players:', error);
@@ -179,9 +198,8 @@ const MultiplayerGame: React.FC = () => {
 
   const loadQuestionAnswers = async () => {
     try {
-      console.log('Loading answers for question:', room.current_question);
       const answers = await getQuestionAnswers(room.id, room.current_question);
-      console.log('Loaded answers:', answers);
+      console.log('Loaded answers for question', room.current_question, ':', answers);
       setQuestionAnswers(answers);
     } catch (error) {
       console.error('Error loading answers:', error);
@@ -198,47 +216,47 @@ const MultiplayerGame: React.FC = () => {
   };
 
   const handleAnswerSelect = async (answerIndex: number) => {
-    if (hasAnswered || showResults) return;
+    if (hasAnswered || showResults || showSuspense) return;
     
     console.log('Answer selected:', answerIndex);
     setSelectedAnswer(answerIndex);
-    setHasAnswered(true);
+    setShowSuspense(true);
     
-    const isCorrect = answerIndex === currentQuestion.correctAnswer;
-    console.log('Is correct:', isCorrect);
-    
-    try {
-      await submitAnswer(
-        room.id,
-        player.id,
-        room.current_question,
-        answerIndex,
-        isCorrect
-      );
-      console.log('Answer submitted successfully');
+    // Show suspense for 2 seconds
+    setTimeout(async () => {
+      setShowSuspense(false);
+      setHasAnswered(true);
       
-      // Force reload answers after submission
-      setTimeout(() => {
-        loadQuestionAnswers();
-      }, 500);
+      const isCorrect = answerIndex === currentQuestion.correctAnswer;
+      console.log('Submitting answer:', { answerIndex, isCorrect });
       
-    } catch (error) {
-      console.error('Error submitting answer:', error);
-      // Reset state on error
-      setHasAnswered(false);
-      setSelectedAnswer(null);
-    }
+      try {
+        await submitAnswer(
+          room.id,
+          player.id,
+          room.current_question,
+          answerIndex,
+          isCorrect
+        );
+        console.log('Answer submitted successfully');
+      } catch (error) {
+        console.error('Error submitting answer:', error);
+        // Reset state on error
+        setHasAnswered(false);
+        setSelectedAnswer(null);
+      }
+    }, 2000);
   };
 
   const handleNextQuestion = async () => {
     if (!player.is_host) return;
     
-    console.log('Moving to next question...');
+    console.log('Host advancing to next question...');
     if (room.current_question >= totalQuestions) {
       console.log('Game complete, ending game...');
       await endGame(room.id);
     } else {
-      console.log('Advancing to question:', room.current_question + 1);
+      console.log('Moving to question:', room.current_question + 1);
       await nextQuestion(room.id, room.current_question + 1);
     }
   };
@@ -256,23 +274,13 @@ const MultiplayerGame: React.FC = () => {
   };
 
   const handleTimeUp = useCallback(() => {
-    if (!hasAnswered) {
-      setKickTimer(10);
-      const kickInterval = setInterval(() => {
-        setKickTimer(prev => {
-          if (prev <= 1) {
-            clearInterval(kickInterval);
-            // Kick player logic here
-            navigate('/multiplayer-results', { 
-              state: { room, player, players, kicked: true }
-            });
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+    if (!hasAnswered && !showResults) {
+      // Auto-submit a random answer or handle timeout
+      console.log('Time up! Player did not answer');
+      // For now, we'll just mark as answered without submitting
+      setHasAnswered(true);
     }
-  }, [hasAnswered, navigate, room, player, players]);
+  }, [hasAnswered, showResults]);
 
   const getPlayerAnswer = (playerId: string) => {
     return questionAnswers.find(a => 
@@ -285,15 +293,22 @@ const MultiplayerGame: React.FC = () => {
   };
 
   const getAnswerColor = (answerIndex: number, isCorrect: boolean) => {
-    if (isCorrect) return 'text-green-400';
-    return 'text-red-400';
+    if (isCorrect) return 'text-green-400 bg-green-500';
+    return 'text-red-400 bg-red-500';
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
-      <div className="flex">
+    <div className="min-h-screen tv-show-bg relative overflow-hidden">
+      {/* Premium Spotlight Effects */}
+      <div className="spotlight spotlight-1"></div>
+      <div className="spotlight spotlight-2"></div>
+      <div className="spotlight spotlight-3"></div>
+      
+      <Confetti isActive={showConfetti} />
+      
+      <div className="flex h-screen">
         {/* Main Game Area */}
-        <div className={`${showChat ? 'w-2/3' : 'w-full'} pr-4`}>
+        <div className={`${showChat ? 'w-3/4' : 'w-4/5'} p-4 overflow-y-auto`}>
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <button
@@ -304,13 +319,16 @@ const MultiplayerGame: React.FC = () => {
               <span>Lobby</span>
             </button>
             
-            <h1 className="text-2xl font-bold text-yellow-400">
-              MULTIPLAYER QUIZ
-            </h1>
+            <div className="text-center">
+              <h1 className="title-premium text-2xl md:text-3xl font-bold">
+                MULTIPLAYER QUIZ
+              </h1>
+              <div className="text-sm text-gray-300 tracking-widest">Room: {room.room_code}</div>
+            </div>
             
             <button
               onClick={() => setShowChat(!showChat)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors"
+              className="nav-btn-premium flex items-center space-x-2 px-4 py-2 text-white rounded-xl transition-all duration-300"
             >
               <MessageCircle className="w-5 h-5" />
               <span>Chat</span>
@@ -326,21 +344,10 @@ const MultiplayerGame: React.FC = () => {
           {/* Timer */}
           <Timer
             duration={60}
-            isActive={!hasAnswered && !showResults && kickTimer === 0}
+            isActive={!hasAnswered && !showResults && !showSuspense}
             onTimeUp={handleTimeUp}
-            onReset={false}
+            onReset={resetTimer}
           />
-
-          {/* Kick Warning */}
-          {kickTimer > 0 && (
-            <div className="text-center mb-6">
-              <div className="inline-block bg-red-900 px-8 py-4 rounded-xl border-2 border-red-500">
-                <p className="text-red-300 text-xl font-bold">
-                  ⚠️ You will be kicked in {kickTimer} seconds!
-                </p>
-              </div>
-            </div>
-          )}
 
           {/* Question */}
           <QuestionBox
@@ -349,53 +356,8 @@ const MultiplayerGame: React.FC = () => {
             showHint={false}
           />
 
-          {/* Players Status */}
-          <div className="mb-8">
-            <div className="bg-gray-800 rounded-xl p-4 border border-gray-600">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center space-x-2">
-                <Users className="w-5 h-5" />
-                <span>Players ({players.filter(p => p.is_active).length})</span>
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {players.filter(p => p.is_active).map((p) => {
-                  const answer = getPlayerAnswer(p.id);
-                  return (
-                    <div
-                      key={p.id}
-                      className={`bg-gray-700 rounded-lg p-3 border-2 ${
-                        p.id === player.id ? 'border-yellow-400' : 'border-gray-600'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-white font-bold text-sm">{p.nickname}</span>
-                          {p.is_host && <Crown className="w-4 h-4 text-yellow-400" />}
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-gray-400 text-xs">Score: {p.score}</span>
-                          {answer && (
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold ${
-                              showResults 
-                                ? getAnswerColor(answer.answer_index, answer.is_correct)
-                                : 'text-yellow-400 border-yellow-400'
-                            }`}>
-                              {getAnswerIcon(answer.answer_index)}
-                            </div>
-                          )}
-                          {!answer && !showResults && (
-                            <div className="w-6 h-6 rounded-full border-2 border-gray-500 animate-pulse"></div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
           {/* Answer Buttons */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8">
             {currentQuestion.options.map((option, index) => (
               <AnswerButton
                 key={index}
@@ -405,17 +367,38 @@ const MultiplayerGame: React.FC = () => {
                 isSelected={selectedAnswer === index}
                 isCorrect={showResults && index === currentQuestion.correctAnswer}
                 isWrong={showResults && selectedAnswer === index && index !== currentQuestion.correctAnswer}
-                isDisabled={hasAnswered || showResults || kickTimer > 0}
-                showSuspense={false}
+                isDisabled={hasAnswered || showResults}
+                showSuspense={showSuspense && selectedAnswer === index}
               />
             ))}
           </div>
 
           {/* Status Messages */}
-          {waitingForPlayers && (
-            <div className="text-center">
-              <div className="inline-block bg-blue-900 px-8 py-4 rounded-xl border border-blue-500">
-                <p className="text-blue-300 text-lg font-bold">
+          {showSuspense && (
+            <div className="text-center mb-8">
+              <div className="inline-block bg-gradient-to-r from-yellow-900/70 to-yellow-800/70 px-12 py-6 rounded-3xl border-2 border-yellow-400/70 backdrop-blur-lg shadow-2xl">
+                <p className="text-3xl md:text-4xl font-bold text-yellow-300 animate-pulse tracking-wider">
+                  IS THAT YOUR FINAL ANSWER?
+                </p>
+                <div className="flex justify-center mt-4">
+                  <div className="flex space-x-2">
+                    {[...Array(4)].map((_, i) => (
+                      <div 
+                        key={i}
+                        className="w-3 h-3 bg-yellow-400 rounded-full animate-bounce" 
+                        style={{animationDelay: `${i * 0.15}s`}}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {waitingForPlayers && !showResults && (
+            <div className="text-center mb-8">
+              <div className="inline-block bg-blue-900/70 px-8 py-4 rounded-xl border border-blue-500 backdrop-blur-lg">
+                <p className="text-blue-300 text-lg font-bold animate-pulse">
                   Waiting for other players to answer...
                 </p>
               </div>
@@ -423,27 +406,99 @@ const MultiplayerGame: React.FC = () => {
           )}
 
           {showResults && (
-            <div className="text-center">
-              <div className="inline-block bg-green-900 px-8 py-4 rounded-xl border border-green-500 mb-4">
+            <div className="text-center mb-8">
+              <div className="inline-block bg-green-900/70 px-8 py-4 rounded-xl border border-green-500 backdrop-blur-lg">
                 <p className="text-green-300 text-xl font-bold">
-                  Round Complete! Next question in 5 seconds...
+                  {selectedAnswer === currentQuestion.correctAnswer ? '🎉 CORRECT!' : '💥 WRONG ANSWER!'}
                 </p>
+                {player.is_host && (
+                  <p className="text-green-200 text-sm mt-2">
+                    Next question in 5 seconds...
+                  </p>
+                )}
               </div>
             </div>
           )}
         </div>
 
+        {/* Players Sidebar */}
+        <div className={`${showChat ? 'w-1/4' : 'w-1/5'} bg-gray-900/90 backdrop-blur-sm border-l border-gray-700 p-4 overflow-y-auto`}>
+          <div className="mb-6">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center space-x-2">
+              <Users className="w-5 h-5 text-yellow-400" />
+              <span>Players ({players.filter(p => p.is_active).length})</span>
+            </h3>
+            
+            <div className="space-y-3">
+              {players.filter(p => p.is_active).map((p) => {
+                const answer = getPlayerAnswer(p.id);
+                const isCurrentPlayer = p.id === player.id;
+                
+                return (
+                  <div
+                    key={p.id}
+                    className={`bg-gray-800 rounded-xl p-4 border-2 transition-all duration-300 ${
+                      isCurrentPlayer ? 'border-yellow-400 bg-yellow-900/20' : 'border-gray-600'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <span className={`font-bold text-sm ${isCurrentPlayer ? 'text-yellow-400' : 'text-white'}`}>
+                          {p.nickname}
+                        </span>
+                        {p.is_host && <Crown className="w-4 h-4 text-yellow-400" />}
+                        {isCurrentPlayer && (
+                          <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">YOU</span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-400 text-xs">Score: {p.score}</span>
+                      
+                      {/* Answer Status */}
+                      <div className="flex items-center space-x-2">
+                        {answer ? (
+                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold ${
+                            showResults 
+                              ? getAnswerColor(answer.answer_index, answer.is_correct)
+                              : 'text-yellow-400 border-yellow-400 bg-yellow-400/20'
+                          }`}>
+                            {getAnswerIcon(answer.answer_index)}
+                          </div>
+                        ) : (
+                          <div className="w-6 h-6 rounded-full border-2 border-gray-500 animate-pulse bg-gray-500/20"></div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
         {/* Chat Sidebar */}
         {showChat && (
-          <div className="w-1/3 bg-gray-800 rounded-xl border border-gray-600 flex flex-col h-96">
-            <div className="p-4 border-b border-gray-600">
+          <div className="w-1/3 bg-gray-800/90 backdrop-blur-sm border-l border-gray-600 flex flex-col">
+            <div className="p-4 border-b border-gray-600 flex items-center justify-between">
               <h3 className="text-lg font-bold text-white">Chat</h3>
+              <button
+                onClick={() => setShowChat(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
               {chatMessages.map((message) => (
                 <div key={message.id} className="text-sm">
-                  <span className="text-yellow-400 font-bold">{message.player_nickname}:</span>
+                  <span className={`font-bold ${
+                    message.player_id === player.id ? 'text-yellow-400' : 'text-blue-400'
+                  }`}>
+                    {message.player_nickname}:
+                  </span>
                   <span className="text-gray-300 ml-2">{message.message}</span>
                 </div>
               ))}
@@ -461,7 +516,12 @@ const MultiplayerGame: React.FC = () => {
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-400 transition-colors"
+                  disabled={!chatInput.trim()}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    chatInput.trim()
+                      ? 'bg-yellow-500 text-black hover:bg-yellow-400'
+                      : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                  }`}
                 >
                   <Send className="w-4 h-4" />
                 </button>
