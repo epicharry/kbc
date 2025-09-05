@@ -61,7 +61,7 @@ const SoloGame: React.FC = () => {
     backgroundMusicStage2: 0.18,
     backgroundMusicStage3: 0.20,
     backgroundMusicStage4: 0.25,
-    backgroundMusicFinal: 0.30,
+    backgroundMusicFinal: 0.10,
     
     // Sound effect volumes
     timerTick: 0.10,
