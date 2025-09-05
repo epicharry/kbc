@@ -41,7 +41,7 @@ const SoloGame: React.FC = () => {
     backgroundMusicStage2: 'YOUR_STAGE_2_MUSIC_URL_HERE',
     backgroundMusicStage3: 'YOUR_STAGE_3_MUSIC_URL_HERE',
     backgroundMusicStage4: 'YOUR_STAGE_4_MUSIC_URL_HERE',
-    backgroundMusicFinal: 'YOUR_FINAL_QUESTION_MUSIC_URL_HERE',
+    backgroundMusicFinal: 'https://valradiant.xyz/audios/stage2.mp3',
     
     // Other audio effects
     timerTick: 'https://valradiant.xyz/audios/timer.mp3',
