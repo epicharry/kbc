@@ -416,7 +416,7 @@ export const valorantQuestions: Question[] = [
   {
   id: 51,
   question: "Which agent is shown in this image?",
-  imageUrl: "https://cmsassets.rgpub.io/sanity/images/dsfx7636/news_live/94d795777116652279c4de73ba19976639c12f5d-1920x1080.jpg",
+  imageUrl: "https://www.myinstants.com/media/sounds/reaverkill5.mp3",
   options: ["Jett", "Reyna", "Phoenix", "Sage"],
   correctAnswer: 0,
   difficulty: 'easy',
