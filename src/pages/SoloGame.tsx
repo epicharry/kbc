@@ -268,6 +268,62 @@ const SoloGame: React.FC = () => {
     }, 1000);
   }, [showResult, showSuspense, currentQuestionIndex, correctAnswers, totalQuestions, navigate]);
   
+  // Developer cheat code: H + G to jump to specific question
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check if H and G are pressed simultaneously
+      if (event.key.toLowerCase() === 'h' || event.key.toLowerCase() === 'g') {
+        const otherKey = event.key.toLowerCase() === 'h' ? 'g' : 'h';
+        
+        // Check if the other key is also currently pressed
+        const checkOtherKey = (e: KeyboardEvent) => {
+          if (e.key.toLowerCase() === otherKey && gameStarted && !showResult && !showSuspense) {
+            // Both keys pressed, show cheat dialog
+            const questionNumber = prompt('🔧 DEV CHEAT: Enter question number (1-50):');
+            if (questionNumber) {
+              const num = parseInt(questionNumber);
+              if (num >= 1 && num <= totalQuestions) {
+                // Jump to the specified question
+                setCurrentQuestionIndex(num - 1);
+                setSelectedAnswer(null);
+                setShowResult(false);
+                setShowSuspense(false);
+                setShowHint(false);
+                setDisabledAnswers([]);
+                setResetTimer(true);
+                setTimeout(() => setResetTimer(false), 100);
+                
+                // Update correct answers to match the new question index
+                setCorrectAnswers(Math.max(0, num - 1));
+                
+                console.log(`🔧 DEV CHEAT: Jumped to question ${num}`);
+              } else {
+                alert('Invalid question number. Please enter a number between 1 and 50.');
+              }
+            }
+            
+            // Remove the temporary listener
+            document.removeEventListener('keydown', checkOtherKey);
+          }
+        };
+        
+        // Add temporary listener for the other key
+        document.addEventListener('keydown', checkOtherKey);
+        
+        // Remove the listener after a short delay if other key wasn't pressed
+        setTimeout(() => {
+          document.removeEventListener('keydown', checkOtherKey);
+        }, 500);
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [gameStarted, showResult, showSuspense, totalQuestions]);
+  
   // Lifeline Handlers
   const handleFiftyFifty = () => {
     if (fiftyFiftyUsed || showResult || showSuspense || !gameStarted) return;
