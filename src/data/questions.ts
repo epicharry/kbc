@@ -412,7 +412,7 @@ export const valorantQuestions: Question[] = [
     correctAnswer: 3,
     difficulty: 'hard',
     category: 'gameplay'
-  }
+  },
   {
   id: 51,
   question: "Which agent is shown in this image?",
