@@ -473,45 +473,8 @@ const SoloGame: React.FC = () => {
           <span className="font-semibold tracking-wider">END GAME</span>
         </button>
         
-        <div className="w-24"></div>
-      </div>
-      
-      {/* Progress Bar */}
-      <ProgressBar 
-        currentQuestion={currentQuestionIndex + 1} 
-        totalQuestions={totalQuestions} 
-      />
-      
-      {/* Timer */}
-      <Timer
-        duration={getTimerDuration()}
-        isActive={!showResult && !showSuspense && !gameOver && gameStarted}
-        onTimeUp={handleTimeUp}
-        onReset={resetTimer}
-        timerAudioUrl={audioUrls.timerTick}
-        warningAudioUrl={audioUrls.timerWarning}
-        audioVolume={{
-          timer: audioVolumes.timerTick,
-          warning: audioVolumes.timerWarning
-        }}
-      />
-      
-      {/* Question Box */}
-      <QuestionBox
-        question={currentQuestion.question}
-        questionNumber={currentQuestionIndex + 1}
-        hint={getHintText(currentQuestion)}
-        showHint={showHint}
-        imageUrl={currentQuestion.imageUrl}
-        audioUrl={currentQuestion.audioUrl}
-        onAudioPlay={handleQuestionAudioPlay}
-        onAudioStop={handleQuestionAudioStop}
-      />
-      
-      {/* Main Game Area with Lifelines on Left */}
-      <div className="flex items-start justify-center max-w-7xl mx-auto gap-8">
-        {/* Lifelines - Left Side */}
-        <div className="hidden lg:flex flex-col space-y-4 mt-8">
+        {/* Lifelines - Top Left Corner */}
+        <div className="hidden lg:block absolute top-20 left-4">
           <Lifelines
             fiftyFiftyUsed={fiftyFiftyUsed}
             skipUsed={skipUsed}
@@ -522,42 +485,73 @@ const SoloGame: React.FC = () => {
             disabled={showResult || showSuspense || gameOver || !gameStarted}
           />
         </div>
-        
-        {/* Answer Buttons - Center */}
-        <div className="flex-1 max-w-4xl">
-          {/* Mobile Lifelines */}
-          <div className="lg:hidden mb-8">
-            <Lifelines
-              fiftyFiftyUsed={fiftyFiftyUsed}
-              skipUsed={skipUsed}
-              hintUsed={hintUsed}
-              onFiftyFifty={handleFiftyFifty}
-              onSkip={handleSkip}
-              onHint={handleHint}
-              disabled={showResult || showSuspense || gameOver || !gameStarted}
-            />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-            {currentQuestion.options.map((option, index) => (
-              <AnswerButton
-                key={index}
-                letter={['A', 'B', 'C', 'D'][index] as 'A' | 'B' | 'C' | 'D'}
-                text={option}
-                onClick={() => handleAnswerSelect(index)}
-                isSelected={selectedAnswer === index}
-                isCorrect={showResult && index === currentQuestion.correctAnswer}
-                isWrong={showResult && selectedAnswer === index && index !== currentQuestion.correctAnswer}
-                isDisabled={showResult || showSuspense || gameOver || disabledAnswers.includes(index) || !gameStarted}
-                showSuspense={showSuspense && selectedAnswer === index}
-              />
-            ))}
-          </div>
-        </div>
-        
-        {/* Empty space for balance - Right Side */}
-        <div className="hidden lg:block w-32"></div>
       </div>
+      
+      {/* Progress Bar */}
+      <div className="mb-6">
+        <ProgressBar 
+          currentQuestion={currentQuestionIndex + 1} 
+          totalQuestions={totalQuestions} 
+        />
+      </div>
+      
+      {/* Timer */}
+      <div className="mb-8">
+        <Timer
+          duration={getTimerDuration()}
+          isActive={!showResult && !showSuspense && !gameOver && gameStarted}
+          onTimeUp={handleTimeUp}
+          onReset={resetTimer}
+          timerAudioUrl={audioUrls.timerTick}
+          warningAudioUrl={audioUrls.timerWarning}
+          audioVolume={{
+            timer: audioVolumes.timerTick,
+            warning: audioVolumes.timerWarning
+          }}
+        />
+      </div>
+      
+      {/* Question Box */}
+      <div className="mb-8">
+        <QuestionBox
+          question={currentQuestion.question}
+          questionNumber={currentQuestionIndex + 1}
+          hint={getHintText(currentQuestion)}
+          showHint={showHint}
+          imageUrl={currentQuestion.imageUrl}
+          audioUrl={currentQuestion.audioUrl}
+          onAudioPlay={handleQuestionAudioPlay}
+          onAudioStop={handleQuestionAudioStop}
+        />
+      </div>
+      
+      {/* Mobile Lifelines */}
+      <div className="lg:hidden mb-6">
+        <Lifelines
+          fiftyFiftyUsed={fiftyFiftyUsed}
+          skipUsed={skipUsed}
+          hintUsed={hintUsed}
+          onFiftyFifty={handleFiftyFifty}
+          onSkip={handleSkip}
+          onHint={handleHint}
+          disabled={showResult || showSuspense || gameOver || !gameStarted}
+        />
+      </div>
+      
+      {/* Answer Buttons */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 max-w-4xl mx-auto">
+        {currentQuestion.options.map((option, index) => (
+          <AnswerButton
+            key={index}
+            letter={['A', 'B', 'C', 'D'][index] as 'A' | 'B' | 'C' | 'D'}
+            text={option}
+            onClick={() => handleAnswerSelect(index)}
+            isSelected={selectedAnswer === index}
+            isCorrect={showResult && index === currentQuestion.correctAnswer}
+            isWrong={showResult && selectedAnswer === index && index !== currentQuestion.correctAnswer}
+            isDisabled={showResult || showSuspense || gameOver || disabledAnswers.includes(index) || !gameStarted}
+            showSuspense={showSuspense && selectedAnswer === index}
+          />
       
       {/* Game Status Messages */}
       {showSuspense && (
