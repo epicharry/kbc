@@ -38,7 +38,7 @@ const SoloGame: React.FC = () => {
   const audioUrls = {
     // Stage-based background music
     backgroundMusicStage1: 'https://valradiant.xyz/audios/stage1.mp3',
-    backgroundMusicStage2: 'YOUR_STAGE_2_MUSIC_URL_HERE',
+    backgroundMusicStage2: 'https://valradiant.xyz/audios/stage2.mp3',
     backgroundMusicStage3: 'YOUR_STAGE_3_MUSIC_URL_HERE',
     backgroundMusicStage4: 'YOUR_STAGE_4_MUSIC_URL_HERE',
     backgroundMusicFinal: 'https://valradiant.xyz/audios/stage2.mp3',
