@@ -5,6 +5,8 @@ export interface Question {
   correctAnswer: number;
   difficulty: 'easy' | 'medium' | 'hard';
   category: 'agents' | 'maps' | 'weapons' | 'gameplay' | 'esports';
+  imageUrl?: string;
+  audioUrl?: string;
 }
 
 export const valorantQuestions: Question[] = [
@@ -412,14 +414,5 @@ export const valorantQuestions: Question[] = [
     correctAnswer: 3,
     difficulty: 'hard',
     category: 'gameplay'
-  },
-  {
-  id: 51,
-  question: "Which agent is shown in this image?",
-  audioUrl: "https://www.myinstants.com/media/sounds/reaverkill5.mp3",
-  options: ["Jett", "Reyna", "Phoenix", "Sage"],
-  correctAnswer: 0,
-  difficulty: 'easy',
-  category: 'agents'
-}
+  }
 ];

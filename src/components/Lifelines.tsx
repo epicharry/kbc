@@ -21,7 +21,7 @@ const Lifelines: React.FC<LifelinesProps> = ({
   disabled
 }) => {
   return (
-    <div className="flex lg:flex-col justify-center lg:justify-start space-x-6 lg:space-x-0 lg:space-y-6 md:space-x-8">
+    <div className="flex justify-center space-x-6 md:space-x-8 mb-10">
       {/* 50-50 */}
       <button
         onClick={onFiftyFifty}

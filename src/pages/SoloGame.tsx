@@ -61,7 +61,7 @@ const SoloGame: React.FC = () => {
     backgroundMusicStage2: 0.18,
     backgroundMusicStage3: 0.20,
     backgroundMusicStage4: 0.25,
-    backgroundMusicFinal: 0.10,
+    backgroundMusicFinal: 0.30,
     
     // Sound effect volumes
     timerTick: 0.10,
@@ -473,73 +473,68 @@ const SoloGame: React.FC = () => {
           <span className="font-semibold tracking-wider">END GAME</span>
         </button>
         
-        {/* Lifelines - Top Left Corner */}
-        <div className="hidden lg:block absolute top-20 left-4">
-          <Lifelines
-            fiftyFiftyUsed={fiftyFiftyUsed}
-            skipUsed={skipUsed}
-            hintUsed={hintUsed}
-            onFiftyFifty={handleFiftyFifty}
-            onSkip={handleSkip}
-            onHint={handleHint}
-            disabled={showResult || showSuspense || gameOver || !gameStarted}
-          />
+        <div className="text-center">
+          <h1 className="title-premium text-2xl md:text-4xl font-bold">
+            VALORANT KBC
+          </h1>
+          <div className="text-sm text-gray-300 tracking-widest mt-1">QUIZ CHAMPIONSHIP</div>
+        </div>
+        
+        <div className="flex items-center space-x-3">
+          <button className="nav-btn-premium p-3 rounded-xl text-white hover:text-yellow-400 transition-all duration-300">
+            <Volume2 className="w-5 h-5" />
+          </button>
+          <button className="nav-btn-premium p-3 rounded-xl text-white hover:text-yellow-400 transition-all duration-300">
+            <Settings className="w-5 h-5" />
+          </button>
         </div>
       </div>
       
       {/* Progress Bar */}
-      <div className="mb-6">
-        <ProgressBar 
-          currentQuestion={currentQuestionIndex + 1} 
-          totalQuestions={totalQuestions} 
-        />
-      </div>
+      <ProgressBar 
+        currentQuestion={currentQuestionIndex + 1} 
+        totalQuestions={totalQuestions} 
+      />
       
       {/* Timer */}
-      <div className="mb-8">
-        <Timer
-          duration={getTimerDuration()}
-          isActive={!showResult && !showSuspense && !gameOver && gameStarted}
-          onTimeUp={handleTimeUp}
-          onReset={resetTimer}
-          timerAudioUrl={audioUrls.timerTick}
-          warningAudioUrl={audioUrls.timerWarning}
-          audioVolume={{
-            timer: audioVolumes.timerTick,
-            warning: audioVolumes.timerWarning
-          }}
-        />
-      </div>
+      <Timer
+        duration={getTimerDuration()}
+        isActive={!showResult && !showSuspense && !gameOver && gameStarted}
+        onTimeUp={handleTimeUp}
+        onReset={resetTimer}
+        timerAudioUrl={audioUrls.timerTick}
+        warningAudioUrl={audioUrls.timerWarning}
+        audioVolume={{
+          timer: audioVolumes.timerTick,
+          warning: audioVolumes.timerWarning
+        }}
+      />
       
       {/* Question Box */}
-      <div className="mb-8">
-        <QuestionBox
-          question={currentQuestion.question}
-          questionNumber={currentQuestionIndex + 1}
-          hint={getHintText(currentQuestion)}
-          showHint={showHint}
-          imageUrl={currentQuestion.imageUrl}
-          audioUrl={currentQuestion.audioUrl}
-          onAudioPlay={handleQuestionAudioPlay}
-          onAudioStop={handleQuestionAudioStop}
-        />
-      </div>
+      <QuestionBox
+        question={currentQuestion.question}
+        questionNumber={currentQuestionIndex + 1}
+        hint={getHintText(currentQuestion)}
+        showHint={showHint}
+        imageUrl={currentQuestion.imageUrl}
+        audioUrl={currentQuestion.audioUrl}
+        onAudioPlay={handleQuestionAudioPlay}
+        onAudioStop={handleQuestionAudioStop}
+      />
       
-      {/* Mobile Lifelines */}
-      <div className="lg:hidden mb-6">
-        <Lifelines
-          fiftyFiftyUsed={fiftyFiftyUsed}
-          skipUsed={skipUsed}
-          hintUsed={hintUsed}
-          onFiftyFifty={handleFiftyFifty}
-          onSkip={handleSkip}
-          onHint={handleHint}
-          disabled={showResult || showSuspense || gameOver || !gameStarted}
-        />
-      </div>
+      {/* Lifelines */}
+      <Lifelines
+        fiftyFiftyUsed={fiftyFiftyUsed}
+        skipUsed={skipUsed}
+        hintUsed={hintUsed}
+        onFiftyFifty={handleFiftyFifty}
+        onSkip={handleSkip}
+        onHint={handleHint}
+        disabled={showResult || showSuspense || gameOver || !gameStarted}
+      />
       
       {/* Answer Buttons */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8 max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
         {currentQuestion.options.map((option, index) => (
           <AnswerButton
             key={index}
