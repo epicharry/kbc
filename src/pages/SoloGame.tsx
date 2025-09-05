@@ -138,6 +138,20 @@ const SoloGame: React.FC = () => {
     
     const { music: currentMusic, stage } = getCurrentBackgroundMusic();
     const currentVolume = getCurrentBackgroundMusicVolume();
+    
+    // Only change music if we've moved to a new stage
+    if (stage !== currentMusicStage && currentMusic) {
+      console.log(`🎵 Changing to stage ${stage} music`);
+      
+      // Stop all current audio first
+      stopAllAudio();
+      
+      // Start new stage music after a brief delay
+      setTimeout(() => {
+        playAudio(currentMusic, currentVolume);
+        setCurrentMusicStage(stage);
+      }, 500);
+    }
   }, [currentQuestionIndex, playAudio]);
   
   const handleAnswerSelect = (answerIndex: number) => {
