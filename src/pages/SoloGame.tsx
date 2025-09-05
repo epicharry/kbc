@@ -62,7 +62,7 @@ const SoloGame: React.FC = () => {
     backgroundMusicFinal: 0.30,
     
     // Sound effect volumes
-    timerTick: 0.25,
+    timerTick: 0.10,
     timerWarning: 0.60,
     correctAnswer: 0.80,
     wrongAnswer: 0.70,
