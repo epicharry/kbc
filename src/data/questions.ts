@@ -414,5 +414,13 @@ export const valorantQuestions: Question[] = [
     correctAnswer: 3,
     difficulty: 'hard',
     category: 'gameplay'
-  }
+  {
+  id: 51,
+  question: "Which agent is shown in this image?",
+  imageUrl: "https://example.com/agent-image.jpg",
+  options: ["Jett", "Reyna", "Phoenix", "Sage"],
+  correctAnswer: 0,
+  difficulty: 'easy',
+  category: 'agents'
+}
 ];
