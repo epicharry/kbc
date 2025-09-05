@@ -552,6 +552,8 @@ const SoloGame: React.FC = () => {
             isDisabled={showResult || showSuspense || gameOver || disabledAnswers.includes(index) || !gameStarted}
             showSuspense={showSuspense && selectedAnswer === index}
           />
+        ))}
+      </div>
       
       {/* Game Status Messages */}
       {showSuspense && (
