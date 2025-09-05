@@ -412,4 +412,5 @@ export const valorantQuestions: Question[] = [
     correctAnswer: 3,
     difficulty: 'hard',
     category: 'gameplay'
+  }
 ];
