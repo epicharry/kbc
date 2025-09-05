@@ -117,7 +117,7 @@ const SoloGame: React.FC = () => {
       const { music: currentMusic } = getCurrentBackgroundMusic();
       const currentVolume = getCurrentBackgroundMusicVolume();
       if (currentMusic) {
-        playAudio(currentMusic, currentVolume);
+        playAudio(currentMusic, currentVolume, true); // Enable looping for background music
       }
       setAudioInitialized(true);
       setGameStarted(true);
@@ -148,7 +148,7 @@ const SoloGame: React.FC = () => {
       
       // Start new stage music after a brief delay
       setTimeout(() => {
-        playAudio(currentMusic, currentVolume);
+        playAudio(currentMusic, currentVolume, true); // Enable looping for background music
         setCurrentMusicStage(stage);
       }, 500);
     }

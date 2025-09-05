@@ -3,7 +3,7 @@ import { useRef, useCallback } from 'react';
 export const useAudio = () => {
   const audioRefs = useRef<{ [key: string]: HTMLAudioElement }>({});
 
-  const playAudio = useCallback((audioUrl: string, volume: number = 0.5) => {
+  const playAudio = useCallback((audioUrl: string, volume: number = 0.5, loop: boolean = false) => {
     if (!audioUrl) return;
     
     try {
@@ -14,6 +14,7 @@ export const useAudio = () => {
       
       const audio = audioRefs.current[audioUrl];
       audio.volume = volume;
+      audio.loop = loop;
       audio.currentTime = 0;
       audio.play().catch(console.warn);
     } catch (error) {
