@@ -353,6 +353,8 @@ const MultiplayerGame: React.FC = () => {
           <QuestionBox
             question={currentQuestion.question}
             questionNumber={room.current_question}
+            imageUrl={currentQuestion.imageUrl}
+            audioUrl={currentQuestion.audioUrl}
             showHint={false}
           />
 

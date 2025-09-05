@@ -5,6 +5,8 @@ export interface Question {
   correctAnswer: number;
   difficulty: 'easy' | 'medium' | 'hard';
   category: 'agents' | 'maps' | 'weapons' | 'gameplay' | 'esports';
+  imageUrl?: string;
+  audioUrl?: string;
 }
 
 export const valorantQuestions: Question[] = [

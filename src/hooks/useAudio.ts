@@ -36,5 +36,17 @@ export const useAudio = () => {
     });
   }, []);
 
-  return { playAudio, stopAudio, stopAllAudio };
+  const muteAllAudio = useCallback(() => {
+    Object.values(audioRefs.current).forEach(audio => {
+      audio.volume = 0;
+    });
+  }, []);
+
+  const unmuteAllAudio = useCallback((originalVolumes: { [key: string]: number }) => {
+    Object.entries(audioRefs.current).forEach(([url, audio]) => {
+      audio.volume = originalVolumes[url] || 0.5;
+    });
+  }, []);
+
+  return { playAudio, stopAudio, stopAllAudio, muteAllAudio, unmuteAllAudio };
 };

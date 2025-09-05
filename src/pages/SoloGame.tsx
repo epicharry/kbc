@@ -12,7 +12,7 @@ import { useAudio } from '../hooks/useAudio';
 
 const SoloGame: React.FC = () => {
   const navigate = useNavigate();
-  const { playAudio, stopAllAudio } = useAudio();
+  const { playAudio, stopAllAudio, muteAllAudio, unmuteAllAudio } = useAudio();
   
   // Game State
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -26,6 +26,8 @@ const SoloGame: React.FC = () => {
   const [currentMusicStage, setCurrentMusicStage] = useState<number>(0);
   const [gameStarted, setGameStarted] = useState(false);
   const [audioInitialized, setAudioInitialized] = useState(false);
+  const [backgroundMusicMuted, setBackgroundMusicMuted] = useState(false);
+  const [originalVolumes, setOriginalVolumes] = useState<{ [key: string]: number }>({});
   
   // Lifeline State
   const [fiftyFiftyUsed, setFiftyFiftyUsed] = useState(false);
@@ -401,6 +403,31 @@ const SoloGame: React.FC = () => {
     return hints[question.id.toString()] || "Think carefully about the question category.";
   };
   
+  const handleQuestionAudioPlay = () => {
+    if (!backgroundMusicMuted) {
+      // Store original volumes before muting
+      const volumes: { [key: string]: number } = {};
+      Object.entries(audioUrls).forEach(([key, url]) => {
+        if (key.includes('backgroundMusic')) {
+          volumes[url] = audioVolumes[key as keyof typeof audioVolumes];
+        }
+      });
+      setOriginalVolumes(volumes);
+      
+      // Mute background music
+      muteAllAudio();
+      setBackgroundMusicMuted(true);
+    }
+  };
+
+  const handleQuestionAudioStop = () => {
+    if (backgroundMusicMuted) {
+      // Restore original volumes
+      unmuteAllAudio(originalVolumes);
+      setBackgroundMusicMuted(false);
+    }
+  };
+  
   return (
     <div className="min-h-screen tv-show-bg p-4 md:p-6">
       {/* Premium Spotlight Effects */}
@@ -489,6 +516,10 @@ const SoloGame: React.FC = () => {
         questionNumber={currentQuestionIndex + 1}
         hint={getHintText(currentQuestion)}
         showHint={showHint}
+        imageUrl={currentQuestion.imageUrl}
+        audioUrl={currentQuestion.audioUrl}
+        onAudioPlay={handleQuestionAudioPlay}
+        onAudioStop={handleQuestionAudioStop}
       />
       
       {/* Lifelines */}
