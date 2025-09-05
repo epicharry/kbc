@@ -416,7 +416,7 @@ export const valorantQuestions: Question[] = [
   {
   id: 51,
   question: "Which agent is shown in this image?",
-  imageUrl: "https://www.myinstants.com/media/sounds/reaverkill5.mp3",
+  audioUrl: "https://www.myinstants.com/media/sounds/reaverkill5.mp3",
   options: ["Jett", "Reyna", "Phoenix", "Sage"],
   correctAnswer: 0,
   difficulty: 'easy',
