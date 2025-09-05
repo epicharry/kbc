@@ -72,16 +72,6 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ currentQuestion, totalQuestio
       </div>
       
       {/* Progress description */}
-      <div className="text-center mt-6">
-        <p className="text-gray-300 text-sm md:text-base font-medium">
-          {currentQuestion < 5 && "🔥 Building momentum..."}
-          {currentQuestion >= 5 && currentQuestion < 10 && "⭐ First milestone reached!"}
-          {currentQuestion >= 10 && currentQuestion < 20 && "🚀 You're on fire!"}
-          {currentQuestion >= 20 && currentQuestion < 35 && "💎 Elite territory!"}
-          {currentQuestion >= 35 && currentQuestion < 50 && "👑 Championship level!"}
-          {currentQuestion >= 50 && "🏆 PERFECT GAME!"}
-        </p>
-      </div>
     </div>
   );
 };

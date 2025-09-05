@@ -473,21 +473,7 @@ const SoloGame: React.FC = () => {
           <span className="font-semibold tracking-wider">END GAME</span>
         </button>
         
-        <div className="text-center">
-          <h1 className="title-premium text-2xl md:text-4xl font-bold">
-            VALORANT KBC
-          </h1>
-          <div className="text-sm text-gray-300 tracking-widest mt-1">QUIZ CHAMPIONSHIP</div>
-        </div>
-        
-        <div className="flex items-center space-x-3">
-          <button className="nav-btn-premium p-3 rounded-xl text-white hover:text-yellow-400 transition-all duration-300">
-            <Volume2 className="w-5 h-5" />
-          </button>
-          <button className="nav-btn-premium p-3 rounded-xl text-white hover:text-yellow-400 transition-all duration-300">
-            <Settings className="w-5 h-5" />
-          </button>
-        </div>
+        <div className="w-24"></div>
       </div>
       
       {/* Progress Bar */}
@@ -522,32 +508,55 @@ const SoloGame: React.FC = () => {
         onAudioStop={handleQuestionAudioStop}
       />
       
-      {/* Lifelines */}
-      <Lifelines
-        fiftyFiftyUsed={fiftyFiftyUsed}
-        skipUsed={skipUsed}
-        hintUsed={hintUsed}
-        onFiftyFifty={handleFiftyFifty}
-        onSkip={handleSkip}
-        onHint={handleHint}
-        disabled={showResult || showSuspense || gameOver || !gameStarted}
-      />
-      
-      {/* Answer Buttons */}
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-        {currentQuestion.options.map((option, index) => (
-          <AnswerButton
-            key={index}
-            letter={['A', 'B', 'C', 'D'][index] as 'A' | 'B' | 'C' | 'D'}
-            text={option}
-            onClick={() => handleAnswerSelect(index)}
-            isSelected={selectedAnswer === index}
-            isCorrect={showResult && index === currentQuestion.correctAnswer}
-            isWrong={showResult && selectedAnswer === index && index !== currentQuestion.correctAnswer}
-            isDisabled={showResult || showSuspense || gameOver || disabledAnswers.includes(index) || !gameStarted}
-            showSuspense={showSuspense && selectedAnswer === index}
+      {/* Main Game Area with Lifelines on Left */}
+      <div className="flex items-start justify-center max-w-7xl mx-auto gap-8">
+        {/* Lifelines - Left Side */}
+        <div className="hidden lg:flex flex-col space-y-4 mt-8">
+          <Lifelines
+            fiftyFiftyUsed={fiftyFiftyUsed}
+            skipUsed={skipUsed}
+            hintUsed={hintUsed}
+            onFiftyFifty={handleFiftyFifty}
+            onSkip={handleSkip}
+            onHint={handleHint}
+            disabled={showResult || showSuspense || gameOver || !gameStarted}
           />
-        ))}
+        </div>
+        
+        {/* Answer Buttons - Center */}
+        <div className="flex-1 max-w-4xl">
+          {/* Mobile Lifelines */}
+          <div className="lg:hidden mb-8">
+            <Lifelines
+              fiftyFiftyUsed={fiftyFiftyUsed}
+              skipUsed={skipUsed}
+              hintUsed={hintUsed}
+              onFiftyFifty={handleFiftyFifty}
+              onSkip={handleSkip}
+              onHint={handleHint}
+              disabled={showResult || showSuspense || gameOver || !gameStarted}
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+            {currentQuestion.options.map((option, index) => (
+              <AnswerButton
+                key={index}
+                letter={['A', 'B', 'C', 'D'][index] as 'A' | 'B' | 'C' | 'D'}
+                text={option}
+                onClick={() => handleAnswerSelect(index)}
+                isSelected={selectedAnswer === index}
+                isCorrect={showResult && index === currentQuestion.correctAnswer}
+                isWrong={showResult && selectedAnswer === index && index !== currentQuestion.correctAnswer}
+                isDisabled={showResult || showSuspense || gameOver || disabledAnswers.includes(index) || !gameStarted}
+                showSuspense={showSuspense && selectedAnswer === index}
+              />
+            ))}
+          </div>
+        </div>
+        
+        {/* Empty space for balance - Right Side */}
+        <div className="hidden lg:block w-32"></div>
       </div>
       
       {/* Game Status Messages */}
